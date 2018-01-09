@@ -73,3 +73,4 @@ Then run the Flask app:
 python app.py
 ```
 
+# WallSticker
