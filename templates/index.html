@@ -1,9 +1,140 @@
+<!DOCTYPE html>
+<html>
+
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wall-Sticker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/jquery.js"></script>
+  <script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
+  <script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
+  <script type="text/javascript">
+    {{ g.sijax.get_js() | safe }}
+    {{ form_init_js | safe }}
+  </script>
+ 
 </head>
 
 <body>
-  <div id="reactEntry"></div>
 
-  <!-- Attach React components -->
-  <script type="text/javascript" src="{{ url_for('static', filename='bundle.js') }}"></script>
+  <table style="width: 70%">
+    <tr>
+      <td>
+        <section>
+          <!-- canvas -->
+          <div id="canvasesdiv" style="position:relative; float:left; width:400px; height:300px">
+            <canvas id="layer1" style="z-index: 1;position:absolute;left:0px;top:0px;border: 1px solid rgb(204, 204, 204)" height="300px"
+              width="400">
+              This text is displayed if your browser does not support HTML5 Canvas.
+            </canvas>
+            <canvas id="layer2" style="z-index: 2;position:absolute;left:0px;top:0px;border: 1px solid rgb(204, 204, 204)" height="300px"
+              width="400">
+              This text is displayed if your browser does not support HTML5 Canvas.
+            </canvas>
+            <div id="formCanvasResponse"></div>
+          </div>
+        </section>
+      </td>
+      <td>
+        <!-- tabs -->
+        <div id="raz" style="float:right">
+          <div>
+            <span id="wallspan" style="color:rgb(207, 205, 205)">Wall</span>
+            <!-- button '+' -->
+            <form id="inputWall" name="submit" method="post" enctype="multipart/form-data" style="position:relative;left:5px;">
+              <input type="file" onchange="form.submit()" name="wallFile" id="wallFile" style="display: none;" accept=".jpg, .jpeg, .png"
+              />
+              <input type='button' value="+" onclick="addWall()" style="position:relative; font-size :25px;  text-align: center; line-height:7px; top:-30px; left:-100px;width:25px; height:20px; color:rgb(204, 204, 204); border:none; background-color:inherit">
+            </form>
+            <div style=" top:0px; left:0px; position:absolute; overflow-y:scroll ; border: 1px solid rgb(204, 204, 204);  border-top-style:hidden; width:403px; height:274px">
+              <ul id="wall_gallery"></ul>
+            </div>
+          </div>
+          <div>
+            <span id="stickerspan" style="color:rgb(202, 202, 202)">Sticker</span>
+            <!-- button '+' -->
+            <form id="inputSticker" name="submit" method="post" enctype="multipart/form-data" style="position:relative;left:5px;">
+              <input type="file" onchange="form.submit()" name="stickerFile" id="stickerFile" style="display: none;" accept=".jpg, .jpeg, .png"
+              />
+              <input type='button' value="+" onclick="addSticker()" style="position:relative; font-size :25px;  text-align: center; line-height:7px; top:-30px; left:35px;width:25px; height:20px; color:rgb(204, 204, 204); border:none; background-color:inherit">
+            </form>
+            <div style=" top:0px; left:0px; position:absolute; overflow-y:scroll ; border: 1px solid rgb(204, 204, 204); border-top-style:hidden; width:403px; height:274px">
+              <ul id="sticker_gallery"></ul>
+            </div>
+          </div>
+          <div>
+            <span id="settingsspan" style="color:rgb(204, 204, 204)">Settings</span>
+            <div>
+              <form id="autoMode" name="submit" method="post" enctype="multipart/form-data">
+                <!-- auto -->
+                <div id="autoModeReact" onchange="this.parentNode.submit()"></div>
+              </form>
+            </div>
+            <!-- manually -->
+            <div id="manuallyMode">
+              <div id="manuallyModeReact"></div>
+
+            </div>
+          </div>
+      </td>
+    </tr>
+    <tr>
+      <!-- button push -->
+      <td style="position: relative;">
+        <div style="position:absolute;left:-13px; top:0px" id="buttonPush"></div>
+      </td>
+      <td>
+        <h2 style="color: rgb(204, 204, 204); position:relative;top:0px; left:-150px;">
+          Auto
+          <div style="position:absolute;top:0px; left:125px;" id="toggle"></div>
+        </h2>
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="3" id="imgsHolder" , style="position: relative;clear:both;border: 1px solid rgb(204, 204, 204);" height=1 50>
+        <form id="inputFiles" name="submit" method="post" enctype="multipart/form-data" style="position:relative;left:5px;">
+          <input type="file" onchange="form.submit()" name="selectedFile" id="selectedFile" style="display: none;" accept=".jpg, .jpeg, .png"
+          />
+          <!-- large button with "+"-->
+          <div style="float:left;">
+            <div id="paper" style="float:left;"></div>
+            <div style="position:absolute; top:53px; left:53px;" id="buttonPlus"></div>
+          </div>
+        </form>
+      </td>
+      <tr>
+        <td colspan="3">
+          <!-- linear progress -->
+          <div id="linearProgress"></div>
+          <!-- buttons apply and download -->
+          <div style="position: relative;float:right;" id="buttonDownload"></div>
+          <div style="position: relative;float:right;" id="buttonApply"></div>
+        </td>
+
+        <!-- This script adds the Roboto font to our project. For more detail go to this site:  http://www.google.com/fonts#UsePlace:use/Collection:Roboto:400,300,500 -->
+        <script>
+          var WebFontConfig = {
+            google: { families: ['Roboto:400,300,500:latin'] }
+          };
+          (function () {
+            var wf = document.createElement('script');
+            wf.src = '/static/js/webfont.js';
+            wf.type = 'text/javascript';
+            wf.async = 'true';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(wf, s);
+          })();
+        </script>
+
+        <!-- Attach React components -->
+        <script type="text/javascript" src="{{ url_for('static', filename='bundle.js') }}"></script>
+      </tr>
+
+  </table>
+  <script src="/static/js/main.js"></script>
+
 </body>
+
+</html>
